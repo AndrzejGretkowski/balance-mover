@@ -78,7 +78,7 @@ def parse_args():
         "--input",
         "-i",
         type=str,
-        default="./*.csv",
+        default="*.csv",
         help="Pattern to match the files: ex. `dir/OSDN_*.dat`",
     )
     parser.add_argument(
@@ -95,15 +95,18 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+    all_files = glob.glob(args.input)
+
+    this_file = Path(__file__).resolve()
+    all_files = [Path(f) for f in all_files]
+    all_files_except_this_one = [p for p in all_files if p != this_file and p.is_file()]
+
     out_dir = Path(args.input).parent / args.out
     out_dir.mkdir(exist_ok=True)
-    all_files = [Path(f) for f in glob.glob(args.input)]
-    this_file = Path(__file__).resolve()
-    all_files_except_this_one = [p for p in all_files if p != this_file and p.is_file()]
 
     for input_file in all_files_except_this_one:
 
-        with open(input_file, "rt") as f_in, open(
+        with open(input_file, "rt", encoding="utf8", errors="ignore") as f_in, open(
             out_dir / input_file.name, "wt", encoding="utf-8"
         ) as f_out:
 
