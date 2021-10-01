@@ -1,5 +1,6 @@
 import csv
 import datetime
+from argparse import ArgumentParser
 from pathlib import Path
 from warnings import warn
 
@@ -24,7 +25,7 @@ MATCHING = {
     },
     "Wskazanie na początek": {
         "source": ["WskazanieLicznika", "ZuzycieM3"],
-        "function": lambda x, y: str(float(x) - float(y)).replace('.', ','),
+        "function": lambda x, y: str(float(x) - float(y)).replace(".", ","),
     },
     "Wskazanie na koniec": {"source": "WskazanieLicznika"},
     "Zużycie M3": {"source": "ZuzycieM3"},
@@ -41,26 +42,28 @@ def parse_row_data(row_data):
     write_row = []
     for key, match_rule in MATCHING.items():
         cell = None
-        if 'value' in match_rule:
-            cell = match_rule['value']
+        if "value" in match_rule:
+            cell = match_rule["value"]
 
-        if 'source' in match_rule:
-            if isinstance(match_rule['source'], list):
-                cell = [row_data[k] for k in match_rule['source']]
+        if "source" in match_rule:
+            if isinstance(match_rule["source"], list):
+                cell = [row_data[k] for k in match_rule["source"]]
             else:
-                cell = row_data[match_rule['source']]
+                cell = row_data[match_rule["source"]]
 
-        if 'function' in match_rule:
+        if "function" in match_rule:
             if isinstance(cell, list):
-                cell = match_rule['function'](*cell)
+                cell = match_rule["function"](*cell)
             else:
-                cell = match_rule['function'](cell)
+                cell = match_rule["function"](cell)
 
-        if 'type' in match_rule:
-            cell = match_rule['type'](cell)
+        if "type" in match_rule:
+            cell = match_rule["type"](cell)
 
         if cell is None:
-            warn(f'Cell {key} could not be parsed for file {input_file} -- SKIPPING FILE!')
+            warn(
+                f"Cell {key} could not be parsed for file {input_file} -- SKIPPING FILE!"
+            )
             return None
 
         write_row.append(cell)
@@ -68,10 +71,41 @@ def parse_row_data(row_data):
     return write_row
 
 
+def parse_args():
+    parser = ArgumentParser(description="This does... something.")
+    parser.add_argument(
+        "--input_path",
+        "-i",
+        type=str,
+        default="./",
+        help="Input dir path of the files.",
+    )
+    parser.add_argument(
+        "--input_glob",
+        "-ig",
+        type=str,
+        default="*",
+        help="Pattern to match the files: ex. `dir/OSDN_*.dat`",
+    )
+    parser.add_argument(
+        "--out",
+        "-o",
+        type=Path,
+        default="PLIKI GAZ",
+        help="Output dir name",
+    )
+    args, _ = parser.parse_known_args()
+    return args
+
+
 if __name__ == "__main__":
-    out_dir = Path("./data/PLIKI GAZ")
+    args = parse_args()
+
+    out_dir = Path(args.input_path) / args.out
     out_dir.mkdir(exist_ok=True)
-    all_files = [path for path in Path("./data").glob("*") if path.is_file()]
+    all_files = [
+        path for path in Path(args.input_path).glob(args.input_glob) if path.is_file()
+    ]
 
     for input_file in all_files:
 
@@ -81,7 +115,7 @@ if __name__ == "__main__":
 
             skip_file = False
             reader = csv.reader(f_in, delimiter=";")
-            writer = csv.writer(f_out, delimiter=";", lineterminator='\n')
+            writer = csv.writer(f_out, delimiter=";", lineterminator="\n")
 
             header = []
             input_data = []
@@ -90,7 +124,9 @@ if __name__ == "__main__":
                     header = row
                 else:
                     if len(header) != len(row):
-                        warn(f'Input file {input_file} has a different number of columns in row {i} -- SKIPPING FILE!')
+                        warn(
+                            f"Input file {input_file} has a different number of columns in row {i} -- SKIPPING FILE!"
+                        )
                         skip_file = True
                         break
                     input_data.append({key: value for key, value in zip(header, row)})
@@ -111,4 +147,4 @@ if __name__ == "__main__":
             if out_file.exists():
                 out_file.unlink()
 
-    input('Press ENTER to close...')
+    input("Press ENTER to close...")
