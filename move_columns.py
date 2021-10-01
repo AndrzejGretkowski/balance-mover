@@ -1,4 +1,5 @@
 import csv
+import glob
 import datetime
 from argparse import ArgumentParser
 from pathlib import Path
@@ -74,17 +75,10 @@ def parse_row_data(row_data):
 def parse_args():
     parser = ArgumentParser(description="This does... something.")
     parser.add_argument(
-        "--input_path",
+        "--input",
         "-i",
         type=str,
-        default="./",
-        help="Input dir path of the files.",
-    )
-    parser.add_argument(
-        "--input_glob",
-        "-ig",
-        type=str,
-        default="*.csv",
+        default="./*.csv",
         help="Pattern to match the files: ex. `dir/OSDN_*.dat`",
     )
     parser.add_argument(
@@ -101,13 +95,11 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    out_dir = Path(args.input_path) / args.out
+    out_dir = Path(args.input_path).parent / args.out
     out_dir.mkdir(exist_ok=True)
-    all_files = [
-        path.resolve() for path in Path(args.input_path).glob(args.input_glob) if path.is_file()
-    ]
+    all_files = [Path(f) for f in glob.glob(args.input)]
     this_file = Path(__file__).resolve()
-    all_files_except_this_one = [p for p in all_files if p != this_file]
+    all_files_except_this_one = [p for p in all_files if p != this_file and p.is_file()]
 
     for input_file in all_files_except_this_one:
 
