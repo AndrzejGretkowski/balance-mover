@@ -84,7 +84,7 @@ def parse_args():
         "--input_glob",
         "-ig",
         type=str,
-        default="*",
+        default="*.csv",
         help="Pattern to match the files: ex. `dir/OSDN_*.dat`",
     )
     parser.add_argument(
