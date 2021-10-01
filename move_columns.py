@@ -26,7 +26,7 @@ MATCHING = {
     },
     "Wskazanie na początek": {
         "source": ["WskazanieLicznika", "ZuzycieM3"],
-        "function": lambda x, y: str(float(x) - float(y)).replace(".", ","),
+        "function": lambda x, y: str(int(x) - int(y)),
     },
     "Wskazanie na koniec": {"source": "WskazanieLicznika"},
     "Zużycie M3": {"source": "ZuzycieM3"},
@@ -95,7 +95,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    out_dir = Path(args.input_path).parent / args.out
+    out_dir = Path(args.input).parent / args.out
     out_dir.mkdir(exist_ok=True)
     all_files = [Path(f) for f in glob.glob(args.input)]
     this_file = Path(__file__).resolve()
