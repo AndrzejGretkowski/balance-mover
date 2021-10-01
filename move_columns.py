@@ -104,12 +104,14 @@ if __name__ == "__main__":
     out_dir = Path(args.input_path) / args.out
     out_dir.mkdir(exist_ok=True)
     all_files = [
-        path for path in Path(args.input_path).glob(args.input_glob) if path.is_file()
+        path.resolve() for path in Path(args.input_path).glob(args.input_glob) if path.is_file()
     ]
+    this_file = Path(__file__).resolve()
+    all_files_except_this_one = [p for p in all_files if p != this_file]
 
-    for input_file in all_files:
+    for input_file in all_files_except_this_one:
 
-        with open(input_file, "rt", encoding="utf-8") as f_in, open(
+        with open(input_file, "rt") as f_in, open(
             out_dir / input_file.name, "wt", encoding="utf-8"
         ) as f_out:
 
