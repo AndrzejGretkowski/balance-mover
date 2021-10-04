@@ -20,9 +20,11 @@ MATCHING = {
     "Rodzaj odczytu": {"value": "RZEC"},
     "Data początku zużycia": {
         "source": "DataOdczytuPoprz",
+        "function": lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").strftime("%Y-%m-%d"),
     },
     "Data końca zużycia": {
         "source": "DataOdczytu",
+        "function": lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").strftime("%Y-%m-%d"),
     },
     "Wskazanie na początek": {
         "source": ["WskazanieLicznika", "ZuzycieM3"],
@@ -39,7 +41,7 @@ MATCHING = {
 }
 
 
-def parse_row_data(row_data):
+def parse_row_data(row_data, input_file):
     write_row = []
     for key, match_rule in MATCHING.items():
         cell = None
@@ -110,7 +112,6 @@ if __name__ == "__main__":
             out_dir / input_file.name, "wt", encoding="utf-8"
         ) as f_out:
 
-            skip_file = False
             reader = csv.reader(f_in, delimiter=";")
             writer = csv.writer(f_out, delimiter=";", lineterminator="\n")
 
@@ -124,24 +125,21 @@ if __name__ == "__main__":
                         warn(
                             f"Input file {input_file} has a different number of columns in row {i} -- SKIPPING FILE!"
                         )
-                        skip_file = True
-                        break
                     input_data.append({key: value for key, value in zip(header, row)})
 
-            if not skip_file:
-                writer.writerow(MATCHING.keys())
-                for row_data in input_data:
-                    write_row = parse_row_data(row_data)
+            writer.writerow(MATCHING.keys())
+            for row_data in input_data:
 
-                    if write_row is None:
-                        skip_file = True
-                        break
+                try:
+                    write_row = parse_row_data(row_data, input_file)
 
+                except Exception as e:
+                    write_row = None
+                    warn(f"Input file {input_file} causes an error: {e}")
+
+                if write_row is None:
+                    writer.writerow([])
+                else:
                     writer.writerow(write_row)
-
-        if skip_file:
-            out_file = Path(out_dir / input_file.name)
-            if out_file.exists():
-                out_file.unlink()
 
     input("Press ENTER to close...")
